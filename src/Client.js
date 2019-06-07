@@ -22,6 +22,7 @@ class Client extends EventEmitter {
         return this.ws && this.ws.readyState === WebSocket.CONNECTING;
     }
     setChannel(_id, settings) {
+        if (this.channel && this.channel._id == _id) return;
         if (this.server.rooms.get(_id)) {
             let channel = this.channel;
             if (channel) this.channel.emit("bye", this);
