@@ -11,7 +11,8 @@ class Client extends EventEmitter {
         this.channel;
         this.ws = ws;
         this.req = req;
-        this.ip = (req.connection.remoteAddress).replace("::ffff:","");
+        this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
+        this.destroied = false;
         this.bindEventListeners();
         require('./Message.js')(this);
     }
@@ -45,36 +46,39 @@ class Client extends EventEmitter {
     }
     destroy() {
         this.ws.close();
+        if (this.channel) {
+            this.channel.emit("bye", this)
+        }
         this.user;
         this.participantId;
         this.channel;
         this.connectionid;
         this.server.connections.delete(this.connectionid);
-        if (this.channel) {
-            this.channel.emit("bye", this)
-        }
+        this.destroied = true;
         console.log(`Removed Connection ${this.connectionid}.`);
     }
     bindEventListeners() {
         this.ws.on("message", (evt) => {
             try {
-                var transmission = JSON.parse(evt);
-            } catch (e) {
-                this.destroy();
-            } finally {
+                let transmission = JSON.parse(evt);
                 for (let msg of transmission) {
                     if (!msg.hasOwnProperty("m")) return;
                     if (!this.server.legit_m.includes(msg.m)) return;
                     this.emit(msg.m, msg);
                     console.log(`RECIEVE: `, JSON.colorStringify(msg));
                 }
+            } catch (e) {
+                console.log(e)
+                this.destroy();
             }
         });
         this.ws.on("close", () => {
+            if (!this.destroied)
             this.destroy();
         });
         this.ws.addEventListener("error", (err) => {
             console.error(err);
+            if (!this.destroied)
             this.destroy();
         });
     }

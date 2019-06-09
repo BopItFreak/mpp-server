@@ -40,16 +40,31 @@ module.exports = (cl) => {
     })
     cl.on("chown", msg => {
         if (!(cl.channel && cl.participantId)) return;
-        console.log((Date.now() - cl.channel.crown.time))
-        console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
+        //console.log((Date.now() - cl.channel.crown.time))
+        //console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
         if (!(cl.channel.crown.userId == cl.user._id) && !((Date.now() - cl.channel.crown.time) > 15000)) return;
         if (msg.hasOwnProperty("id")) {
-            console.log(cl.channel.crown)
-                if (cl.user._id == cl.channel.crown.userId || cl.channel.crown.dropped)
-                cl.channel.chown(msg.id);   
+            // console.log(cl.channel.crown)
+            if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped)
+                cl.channel.chown(msg.id);
         } else {
-            if (cl.user._id == cl.channel.crown.userId || cl.channel.crown.dropped)
-            cl.channel.chown();
+            if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped)
+                cl.channel.chown();
         }
+    })
+    cl.on("chset", msg => {
+        if (!(cl.channel && cl.participantId)) return;
+        if (!(cl.user._id == cl.channel.crown.userId)) return;
+        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
+        let settings = {};
+        settings.lobby = cl.channel.isLobby(cl.channel._id);
+        settings.visible = !!msg.set.visible;
+        settings.crownsolo = !!msg.set.crownsolo;
+        settings.chat = !!msg.set.chat;
+        settings.color = cl.channel.verifyColor(msg.set.color) || cl.channel.settings.color;
+        settings.color2 = cl.channel.verifyColor(msg.set.color2) || cl.channel.settings.color2;
+        cl.channel.settings = settings;
+        console.log(settings)
+        cl.channel.updateCh();
     })
 }
