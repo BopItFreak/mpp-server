@@ -29,13 +29,14 @@ class Room extends EventEmitter {
         let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
         cl.user.id = participantId;
         cl.participantId = participantId;
-        if (this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) { //user that created the room, give them the crown.
+        if ((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && !this.isLobby(this._id)) { //user that created the room, give them the crown.
             this.crown = {
                 participantId: cl.participantId,
                 userId: cl.user._id,
                 time: Date.now(),
                 startPos: {x: 50, y: 50},
-                endPos: {x: this.getCrownX(), y: this.getCrownY()}
+                endPos: {x: this.getCrownX(), y: this.getCrownY()},
+                dropped: false
             }
         }
         this.ppl.set(participantId, cl);
@@ -105,12 +106,13 @@ fetchData(usr, cl) {
     [...this.ppl.values()].forEach((a) => {
         chppl.push(a.user);
     })
+    let crown = this.crown;
     let data = {
         m: "ch",
         p: "ofo",
         ch: {
             count: chppl.length,
-            crown: this.crown,
+            crown: crown,
             settings: this.settings,
             _id: this._id
         },
@@ -127,6 +129,8 @@ fetchData(usr, cl) {
     }
     if (data.ch.crown == null) {
         delete data.ch.crown;
+    } else {
+        delete data.ch.crown.dropped;
     }
     return data;
 }
@@ -173,6 +177,28 @@ getCrownY() {
 }
 getCrownX() {
     return 50;
+}
+chown(id) {
+    let prsn = this.ppl.get(id);
+    if (prsn) {
+        this.crown = {
+            participantId: prsn.participantId,
+            userId: prsn.user._id,
+            time: Date.now(),
+            startPos: {x: 50, y: 50},
+            endPos: {x: this.getCrownX(), y: this.getCrownY()},
+            dropped: false
+        }
+    } else {
+        this.crown = {
+            userId: this.crown.userId,
+            time: Date.now(),
+            startPos: {x: 50, y: 50},
+            endPos: {x: this.getCrownX(), y: this.getCrownY()},
+            dropped: true
+        }
+    }
+    this.updateCh();
 }
 setCords(p, x, y) {
     if (p.participantId)
