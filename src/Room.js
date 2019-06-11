@@ -19,10 +19,12 @@ class Room extends EventEmitter {
             color: this.verifyColor(settings.color) || this.getColor(_id),
             color2: this.verifyColor(settings.color) || this.getColor2(_id)
         }
+        this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
         this.bindEventListeners();
         this.server.rooms.set(_id, this);
+        this.bans = new Map();
     }
     join(cl) { //this stuff is complicated
         let otheruser = this.connections.find((a) => a.user._id == cl.user._id)
@@ -30,7 +32,7 @@ class Room extends EventEmitter {
             let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
             cl.user.id = participantId;
             cl.participantId = participantId;
-            if ((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && !this.isLobby(this._id) || (this.crown && this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
+            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && !this.isLobby(this._id)) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
                 this.crown = {
                     participantId: cl.participantId,
                     userId: cl.user._id,
@@ -57,7 +59,11 @@ class Room extends EventEmitter {
                 x: this.ppl.get(cl.participantId).x || 200,
                 y: this.ppl.get(cl.participantId).y || 100,
                 _id: cl.user._id
-            }], cl)
+            }], cl, false)
+            cl.sendArray([{
+                m: "c",
+                c: this.chatmsgs.slice(-1 * 32)
+            }])
             this.updateCh(cl);
         } else {
             cl.user.id = otheruser.participantId;
@@ -76,10 +82,11 @@ class Room extends EventEmitter {
             this.sendArray([{
                 m: "bye",
                 p: p.participantId
-            }], p);
-            if (this.crown.userId == p.user._id && !this.crowndropped) {
-                this.chown();
-            }
+            }], p, false);
+            if (this.crown)
+                if (this.crown.userId == p.user._id && !this.crowndropped) {
+                    this.chown();
+                }
             this.updateCh();
         } else {
             this.connections.splice(this.connections.findIndex((a) => a.connectionid == p.connectionid), 1);
@@ -91,6 +98,24 @@ class Room extends EventEmitter {
         this.connections.forEach((usr) => {
             this.server.connections.get(usr.connectionid).sendArray([this.fetchData(usr, cl)])
         })
+        this.server.updateRoom(this.fetchData());
+    }
+    updateParticipant(pid, name) {
+        let p = this.ppl.get(pid);
+        if (!p) return;
+        this.ppl.get(pid).user.name = name;
+        this.connections.filter((ofo) => ofo.participantId == p.participantId).forEach((usr) => {
+            usr.user.name = name;
+        })
+        this.sendArray([{
+            color: p.user.color,
+            id: p.participantId,
+            m: "p",
+            name: p.user.name,
+            x: p.x || 200,
+            y: p.y || 100,
+            _id: p.user._id
+        }])
     }
     destroy() { //destroy room
         this._id;
@@ -98,11 +123,12 @@ class Room extends EventEmitter {
         this.settings = {};
         this.ppl;
         this.connnections;
+        this.chatmsgs;
         this.server.rooms.delete(this._id);
     }
-    sendArray(arr, not) {
+    sendArray(arr, not, onlythisparticipant) {
         this.connections.forEach((usr) => {
-            if (!not || usr.participantId != not.participantId) {
+            if (!not || (usr.participantId != not.participantId && !onlythisparticipant) || (usr.connectionid != not.connectionid && onlythisparticipant)) {
                 try {
                     this.server.connections.get(usr.connectionid).sendArray(arr)
                 } catch (e) {
@@ -128,7 +154,7 @@ class Room extends EventEmitter {
             ppl: chppl
         }
         if (cl) {
-            if (usr.user.id == cl.user.id) {
+            if (usr.connectionid == cl.connectionid) {
                 data.p = cl.participantId;
             } else {
                 delete data.p;
@@ -138,7 +164,6 @@ class Room extends EventEmitter {
         }
         if (data.ch.crown == null) {
             delete data.ch.crown;
-            this.crown = crown;
         } else {
 
         }
@@ -223,15 +248,133 @@ class Room extends EventEmitter {
         this.updateCh();
     }
     setCords(p, x, y) {
-        if (p.participantId)
+        if (p.participantId && this.ppl.get(p.participantId)) {
             x ? this.ppl.get(p.participantId).x = x : {};
-        y ? this.ppl.get(p.participantId).y = y : {};
+            y ? this.ppl.get(p.participantId).y = y : {};
+            this.sendArray([{
+                m: "m",
+                id: p.participantId,
+                x: this.ppl.get(p.participantId).x,
+                y: this.ppl.get(p.participantId).y
+            }], p, false);
+        }
+    }
+    chat(p, msg) {
+        if (msg.message.length > 512) return;
+        let filter = ["AMIGHTYWIND"];
+        let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
+        if (regexp.test(msg.message)) return;
+        let prsn = this.ppl.get(p.participantId);
+        if (prsn) {
+            let message = {};
+            message.m = "a";
+            message.a = msg.message;
+            message.p = {
+                color: p.user.color,
+                id: p.participantId,
+                name: p.user.name,
+                _id: p.user._id
+            };
+            message.t = Date.now();
+            this.sendArray([message]);
+            this.chatmsgs.push(message);
+        }
+    }
+    playNote(cl, note) {
         this.sendArray([{
-            m: "m",
-            id: p.participantId,
-            x: this.ppl.get(p.participantId).x,
-            y: this.ppl.get(p.participantId).y
-        }], p);
+            m: "n",
+            n: note.n,
+            p: cl.participantId,
+            t: Date.now()
+        }], cl, true);
+    }
+    kickban(_id, ms) {
+        ms = parseInt(ms);
+        if (ms >= (1000 * 60 * 60 - 500)) return;
+        if (ms < 0) return;
+        ms = Math.round(ms / 1000) * 1000;
+        let user = this.connections.find((usr) => usr.user._id == _id);
+        if (!user) return;
+        let asd = true;
+        let tonc = true;
+        let pthatbanned = this.ppl.get(this.crown.participantId);
+        this.connections.filter((usr) => usr.participantId == user.participantId).forEach((u) => {
+            user.bantime = Math.floor(Math.floor(ms / 1000) / 60);
+            user.bannedtime = Date.now();
+            user.msbanned = ms;
+            this.bans.set(user.user._id, user);
+            if (this.crown && (this.crown.userId)) {
+                u.setChannel("test/awkward", {});
+                if (asd)
+                    this.Notification(user.user._id,
+                        "Notice",
+                        `Banned from \"${this._id}\" for ${Math.floor(Math.floor(ms / 1000) / 60)} minutes.`,
+                        "",
+                        7000,
+                        "#room",
+                        "short"
+                    )
+                if (asd)
+                    this.Notification("room",
+                        "Notice",
+                        `${pthatbanned.user.name} banned ${user.user.name} from the channel for ${Math.floor(Math.floor(ms / 1000) / 60)} minutes.`,
+                        "",
+                        7000,
+                        "#room",
+                        "short"
+                    )
+                if (this.crown && (this.crown.userId == _id) && tonc) {
+                    this.Notification("room",
+                        "Certificate of Award",
+                        `Let it be known that ${user.user.name} kickbanned him/her self.`,
+                        "",
+                        7000,
+                        "#room"
+                    );
+                    tonc = false;
+                }
+
+            }
+
+        })
+    }
+    Notification(who, title, text, html, duration, target, klass, id) {
+        let obj = {
+            m: "notification",
+            title: title,
+            text: text,
+            html: html,
+            target: target,
+            duration: duration,
+            class: klass,
+            id: id
+        };
+        if (!id) delete obj.id;
+        if (!title) delete obj.title;
+        if (!text) delete obj.text;
+        if (!html) delete obj.html;
+        if (!target) delete obj.target;
+        if (!duration) delete obj.duration;
+        if (!klass) delete obj.class;
+        switch (who) {
+            case "all": {
+                for (let con of Array.from(this.server.connections.values())) {
+                    con.sendArray([obj]);
+                }
+                break;
+            }
+            case "room": {
+                for (let con of this.connections) {
+                    con.sendArray([obj]);
+                }
+                break;
+            }
+            default: {
+                Array.from(this.server.connections.values()).filter((usr) => usr.user._id == who).forEach((p) => {
+                    p.sendArray([obj]);
+                });
+            }
+        }
     }
     bindEventListeners() {
         this.on("bye", participant => {
@@ -240,6 +383,10 @@ class Room extends EventEmitter {
 
         this.on("m", (participant, x, y) => {
             this.setCords(participant, x, y);
+        })
+
+        this.on("a", (participant, msg) => {
+            this.chat(participant, msg);
         })
     }
 

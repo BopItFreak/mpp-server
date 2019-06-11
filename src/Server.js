@@ -12,6 +12,7 @@ class Server extends EventEmitter {
         });
         this.connectionid = 0;
         this.connections = new Map();
+        this.roomlisteners = new Map();
         this.rooms = new Map();
         this.wss.on('connection', (ws, req) => {
             this.connections.set(++this.connectionid, new Client(ws, req, this));
@@ -24,6 +25,15 @@ class Server extends EventEmitter {
         this.defaultLobbyColor = config.defaultLobbyColor || "#19b4b9";
         this.defaultLobbyColor2 = config.defaultLobbyColor2 || "#801014";
     };
+    updateRoom(data) {
+        for (let cl of Array.from(this.roomlisteners.values())) {
+            cl.sendArray([{
+                "m": "ls",
+                "c": false,
+                "u": [data.ch]
+            }])
+        }
+    }
 }
 
 module.exports = Server;

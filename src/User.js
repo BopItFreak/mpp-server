@@ -28,18 +28,11 @@ class User {
         }
     }
     updatedb() {
-        fs.writeFileSync('src/db/users.json', JSON.stringify(this.strMapToObj(this.userdb), null, 2), (err) => {
+        fs.writeFileSync('src/db/users.json', JSON.stringify(User.strMapToObj(this.userdb), null, 2), (err) => {
             if (err) {
                 throw err;
             }
         });
-    }
-    strMapToObj(strMap) {
-        let obj = Object.create(null);
-        for (let [k, v] of strMap) {
-            obj[k] = v;
-        }
-        return obj;
     }
     setUpDb() {
         let files = fs.readdirSync("src/db/");
@@ -53,6 +46,13 @@ class User {
         } else {
             this.userdb = new Map(Object.entries(require("./db/users.json")));
         }
+    }
+    static strMapToObj(strMap) {
+        let obj = Object.create(null);
+        for (let [k, v] of strMap) {
+            obj[k] = v;
+        }
+        return obj;
     }
 }
 module.exports = User;

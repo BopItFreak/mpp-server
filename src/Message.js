@@ -9,7 +9,7 @@ module.exports = (cl) => {
             msg.motd = cl.server.welcome_motd;
             msg.t = Date.now();
             msg.u = data;
-            msg.v = "1.0 Alpha";
+            msg.v = "Beta";
             cl.sendArray([msg])
             cl.user = data;
         })
@@ -64,7 +64,67 @@ module.exports = (cl) => {
         settings.color = cl.channel.verifyColor(msg.set.color) || cl.channel.settings.color;
         settings.color2 = cl.channel.verifyColor(msg.set.color2) || cl.channel.settings.color2;
         cl.channel.settings = settings;
-        console.log(settings)
         cl.channel.updateCh();
     })
+    cl.on("a", msg => {
+        if (!(cl.channel && cl.participantId)) return;
+        if (!msg.hasOwnProperty('message')) return;
+        cl.channel.emit('a', cl, msg);
+    })
+    cl.on('n', msg => {
+        if (!(cl.channel && cl.participantId)) return;
+        if (!msg.hasOwnProperty('t') || !msg.hasOwnProperty('n')) return;
+        if (typeof msg.t != 'number' || typeof msg.n != 'object') return;
+        cl.channel.playNote(cl, msg);
+    })
+    cl.on('+ls', msg => {
+        cl.server.roomlisteners.set(cl.connectionid, cl);
+        let rooms = [];
+        for (let room of Array.from(cl.server.rooms.values())) {
+            let data = room.fetchData().ch;
+            if (room.bans.get(cl.user._id)) {
+                data.banned = true;
+            }
+            rooms.push(data);
+        }
+        cl.sendArray([{
+            "m": "ls",
+            "c": true,
+            "u": rooms
+        }])
+    })
+    cl.on('-ls', msg => {
+        cl.server.roomlisteners.delete(cl.connectionid);
+    })
+    cl.on("userset", msg => {
+        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
+        if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
+            if (msg.set.name.length > 40) return;
+            cl.user.name = msg.set.name;
+            let user = new User(cl);
+            user.getUserData().then((usr) => {
+                let dbentry = user.userdb.get(cl.user._id);
+                if (!dbentry) return;
+                dbentry.name = msg.set.name;
+                user.updatedb();
+                cl.server.rooms.forEach((room) => {
+                    room.updateParticipant(cl.participantId, msg.set.name);
+                })               
+            })
+            
+        }
+    })
+    cl.on('kickban', msg => {
+        if (!(cl.channel && cl.participantId)) return;
+        if (!(cl.user._id == cl.channel.crown.userId)) return;
+        if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
+            let _id = msg._id;
+            let ms = msg.ms || 0;
+            cl.channel.kickban(_id, ms);
+        }
+    })
+    cl.on("bye", msg => {
+        cl.destroy();
+    })
+
 }

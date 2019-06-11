@@ -6,9 +6,8 @@ global.createKeccakHash = require('keccak');
 const AsyncConsole = require('asyncconsole')
 
 let Server = require("./src/Server.js");
-global.SERVER = new Server({
-    port: 8080
-});
+let config = require('./src/db/config.json');
+global.SERVER = new Server(config);
 let console = new AsyncConsole("", input => {
     try {
         console.log(JSON.stringify(eval(input)));

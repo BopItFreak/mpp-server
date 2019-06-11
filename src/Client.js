@@ -25,6 +25,24 @@ class Client extends EventEmitter {
     setChannel(_id, settings) {
         if (this.channel && this.channel._id == _id) return;
         if (this.server.rooms.get(_id)) {
+            let room = this.server.rooms.get(_id);
+            let userbanned = room.bans.get(this.user._id);
+            if (userbanned && (Date.now() - userbanned.bannedtime >= userbanned.msbanned)) {
+                room.bans.delete(userbanned.user._id);
+                userbanned = undefined;
+            }
+            if (userbanned) {
+                console.log(Date.now() - userbanned.bannedtime)
+                room.Notification(this.user._id,
+                    "Notice",
+                    `Currently banned from \"${_id}\" for ${Math.ceil(Math.floor((userbanned.msbanned - (Date.now() - userbanned.bannedtime)) / 1000) / 60)} minutes.`,
+                    7000,
+                    "",
+                    "#room",
+                    "short"
+                );
+                return;
+            }
             let channel = this.channel;
             if (channel) this.channel.emit("bye", this);
             if (channel) this.channel.updateCh();
@@ -40,7 +58,7 @@ class Client extends EventEmitter {
     }
     sendArray(arr) {
         if (this.isConnected()) {
-            console.log(`SEND: `, JSON.colorStringify(arr));
+            //console.log(`SEND: `, JSON.colorStringify(arr));
             this.ws.send(JSON.stringify(arr));
         }
     }
@@ -52,6 +70,7 @@ class Client extends EventEmitter {
         this.user;
         this.participantId;
         this.channel;
+        this.server.roomlisteners.delete(this.connectionid);
         this.connectionid;
         this.server.connections.delete(this.connectionid);
         this.destroied = true;
@@ -65,7 +84,7 @@ class Client extends EventEmitter {
                     if (!msg.hasOwnProperty("m")) return;
                     if (!this.server.legit_m.includes(msg.m)) return;
                     this.emit(msg.m, msg);
-                    console.log(`RECIEVE: `, JSON.colorStringify(msg));
+                    //console.log(`RECIEVE: `, JSON.colorStringify(msg));
                 }
             } catch (e) {
                 console.log(e)
@@ -74,12 +93,12 @@ class Client extends EventEmitter {
         });
         this.ws.on("close", () => {
             if (!this.destroied)
-            this.destroy();
+                this.destroy();
         });
         this.ws.addEventListener("error", (err) => {
             console.error(err);
             if (!this.destroied)
-            this.destroy();
+                this.destroy();
         });
     }
 }
