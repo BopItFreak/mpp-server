@@ -64,6 +64,7 @@ class Room extends EventEmitter {
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
             }])
+            console.log("trying send chat", this.chatmsgs.slice(-1 * 32))
             this.updateCh(cl);
         } else {
             cl.user.id = otheruser.participantId;
