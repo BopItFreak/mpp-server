@@ -50,7 +50,6 @@ class Room extends EventEmitter {
             }
             this.ppl.set(participantId, cl);
             this.connections.push(cl);
-
             this.sendArray([{
                 color: this.ppl.get(cl.participantId).user.color,
                 id: this.ppl.get(cl.participantId).participantId,
@@ -64,7 +63,6 @@ class Room extends EventEmitter {
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
             }])
-            console.log("trying send chat", this.chatmsgs.slice(-1 * 32))
             this.updateCh(cl);
         } else {
             cl.user.id = otheruser.participantId;

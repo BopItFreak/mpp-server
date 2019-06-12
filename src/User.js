@@ -18,7 +18,7 @@ class User {
                 "_id": _id,
                 "ip": this.cl.ip
             });
-            console.log("Set database", user.name, user._id)
+            console.log("Set database", _id)
             this.updatedb();
         }
         let user = this.userdb.get(_id);

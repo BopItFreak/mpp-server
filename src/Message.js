@@ -78,6 +78,7 @@ module.exports = (cl) => {
         cl.channel.playNote(cl, msg);
     })
     cl.on('+ls', msg => {
+        if (!(cl.channel && cl.participantId)) return;
         cl.server.roomlisteners.set(cl.connectionid, cl);
         let rooms = [];
         for (let room of Array.from(cl.server.rooms.values())) {
@@ -94,9 +95,11 @@ module.exports = (cl) => {
         }])
     })
     cl.on('-ls', msg => {
+        if (!(cl.channel && cl.participantId)) return;
         cl.server.roomlisteners.delete(cl.connectionid);
     })
     cl.on("userset", msg => {
+        if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
             if (msg.set.name.length > 40) return;
@@ -107,6 +110,7 @@ module.exports = (cl) => {
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
                 user.updatedb();
+                console.log("Updateing user ", usr.name, msg.set.name);
                 cl.server.rooms.forEach((room) => {
                     room.updateParticipant(cl.participantId, msg.set.name);
                 })               
