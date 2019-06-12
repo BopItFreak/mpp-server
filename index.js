@@ -8,10 +8,10 @@ const AsyncConsole = require('asyncconsole')
 let Server = require("./src/Server.js");
 let config = require('./src/db/config.json');
 global.SERVER = new Server(config);
-let console = new AsyncConsole("", input => {
+let console = process.platform == 'win32' ? new AsyncConsole("", input => {
     try {
         console.log(JSON.stringify(eval(input)));
     } catch(e) {
         console.log(e.toString());
     }
-})
+}) : {};
