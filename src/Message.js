@@ -112,7 +112,7 @@ module.exports = (cl) => {
                 user.updatedb();
                 console.log("Updateing user ", usr.name, msg.set.name);
                 cl.server.rooms.forEach((room) => {
-                    room.updateParticipant(cl.participantId, msg.set.name);
+                    room.updateParticipant(cl.participantId, {name: msg.set.name});
                 })               
             })
             
@@ -129,6 +129,39 @@ module.exports = (cl) => {
     })
     cl.on("bye", msg => {
         cl.destroy();
+    })
+    cl.on("admin message", msg => {
+        if (!(cl.channel && cl.participantId)) return;
+        if (!msg.hasOwnProperty('password') || !msg.hasOwnProperty('msg')) return;
+        if (typeof msg.msg != 'object') return;
+        if (msg.password !== cl.server.adminpass) return;
+        cl.ws.emit("message", JSON.stringify([msg.msg]), true);
+        console.log(JSON.stringify([msg.msg]))
+    })
+    //admin only stuff
+    cl.on('color', (msg, admin) => {
+        if (!admin) return;
+        console.log(typeof cl.channel.verifyColor(msg.color))
+        if (typeof cl.channel.verifyColor(msg.color) != 'string') return;
+        if (!msg.hasOwnProperty('id') && !msg.hasOwnProperty('_id')) return;
+        cl.server.connections.forEach((usr) => {
+            if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {    
+                let user = new User(usr);
+                user.cl.user.color = msg.color;
+                user.getUserData().then((uSr) => {
+                    if (!uSr._id) return;
+                    let dbentry = user.userdb.get(uSr._id);
+                    if (!dbentry) return;
+                    dbentry.color = msg.color;
+                    user.updatedb();
+                    console.log("Updateing user ", uSr.color, msg.color);
+                    cl.server.rooms.forEach((room) => {
+                        room.updateParticipant(usr.participantId, {color: msg.color});
+                    })               
+                })
+            }
+        })
+       
     })
 
 }

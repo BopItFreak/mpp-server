@@ -77,13 +77,13 @@ class Client extends EventEmitter {
         console.log(`Removed Connection ${this.connectionid}.`);
     }
     bindEventListeners() {
-        this.ws.on("message", (evt) => {
+        this.ws.on("message", (evt, admin) => {
             try {
                 let transmission = JSON.parse(evt);
                 for (let msg of transmission) {
                     if (!msg.hasOwnProperty("m")) return;
                     if (!this.server.legit_m.includes(msg.m)) return;
-                    this.emit(msg.m, msg);
+                    this.emit(msg.m, msg, !!admin);
                     //console.log(`RECIEVE: `, JSON.colorStringify(msg));
                 }
             } catch (e) {

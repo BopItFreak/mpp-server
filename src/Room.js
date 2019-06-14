@@ -99,12 +99,17 @@ class Room extends EventEmitter {
         })
         this.server.updateRoom(this.fetchData());
     }
-    updateParticipant(pid, name) {
+    updateParticipant(pid, options) {
         let p = this.ppl.get(pid);
         if (!p) return;
-        this.ppl.get(pid).user.name = name;
+        options.name ? this.ppl.get(pid).user.name = options.name : {};
+        options._id ? this.ppl.get(pid).user._id = options._id : {};
+        options.color ? this.ppl.get(pid).user.color = options.color : {};
+        options.name ? this.ppl.get(pid).user.name = options.name : {};
         this.connections.filter((ofo) => ofo.participantId == p.participantId).forEach((usr) => {
-            usr.user.name = name;
+            options.name ? usr.user.name = options.name : {};
+            options._id ? usr.user._id = options._id : {};
+            options.color ? usr.user.color = options.color : {};
         })
         this.sendArray([{
             color: p.user.color,
@@ -168,9 +173,14 @@ class Room extends EventEmitter {
         }
         return data;
     }
-    verifyColor(color) {
-        return color; //TODO make this
-    }
+    verifyColor(strColor){
+        var test2 = /^#[0-9A-F]{6}$/i.test(strColor);
+        if(test2 == true){
+          return strColor;
+        } else{
+          return false;
+        }
+      }
     getColor(_id) {
         if (this.isLobby(_id)) {
             return this.server.defaultLobbyColor;
