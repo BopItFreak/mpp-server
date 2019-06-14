@@ -153,7 +153,7 @@ module.exports = (cl) => {
                     let dbentry = user.userdb.get(uSr._id);
                     if (!dbentry) return;
                     dbentry.color = msg.color;
-                    user.updatedb();
+                    //user.updatedb();
                     console.log("Updateing user ", uSr.color, msg.color);
                     cl.server.rooms.forEach((room) => {
                         room.updateParticipant(usr.participantId, {color: msg.color});
