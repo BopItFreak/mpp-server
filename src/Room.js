@@ -13,7 +13,7 @@ class Room extends EventEmitter {
         this.crowndropped = false;
         this.settings = {
             lobby: this.isLobby(_id),
-            visible: settings.visible,
+            visible: settings.hasOwnProperty('visible') ? settings.visible : true,
             crownsolo: settings.crownsolo || false,
             chat: settings.chat || true,
             color: this.verifyColor(settings.color) || this.getColor(_id),
