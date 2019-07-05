@@ -27,6 +27,7 @@ class Server extends EventEmitter {
         this.adminpass = config.adminpass || "Bop It";
     };
     updateRoom(data) {
+        if (!data.ch.settings.visible) return;
         for (let cl of Array.from(this.roomlisteners.values())) {
             cl.sendArray([{
                 "m": "ls",

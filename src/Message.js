@@ -69,13 +69,21 @@ module.exports = (cl) => {
     cl.on("a", msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
-        cl.channel.emit('a', cl, msg);
+        if (cl.channel.settings.chat) {
+            cl.channel.emit('a', cl, msg);
+        }
     })
     cl.on('n', msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('t') || !msg.hasOwnProperty('n')) return;
         if (typeof msg.t != 'number' || typeof msg.n != 'object') return;
-        cl.channel.playNote(cl, msg);
+        if (cl.channel.settings.crownsolo) {
+            if ((cl.channel.crown.userId == cl.user._id) && !cl.channel.crowndropped) {
+                cl.channel.playNote(cl, msg);
+            }
+        } else {
+            cl.channel.playNote(cl, msg);
+        }
     })
     cl.on('+ls', msg => {
         if (!(cl.channel && cl.participantId)) return;
@@ -86,7 +94,7 @@ module.exports = (cl) => {
             if (room.bans.get(cl.user._id)) {
                 data.banned = true;
             }
-            rooms.push(data);
+            if (room.settings.visible) rooms.push(data);
         }
         cl.sendArray([{
             "m": "ls",
@@ -110,12 +118,13 @@ module.exports = (cl) => {
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
                 user.updatedb();
-                console.log("Updateing user ", usr.name, msg.set.name);
                 cl.server.rooms.forEach((room) => {
-                    room.updateParticipant(cl.participantId, {name: msg.set.name});
-                })               
+                    room.updateParticipant(cl.participantId, {
+                        name: msg.set.name
+                    });
+                })
             })
-            
+
         }
     })
     cl.on('kickban', msg => {
@@ -136,16 +145,14 @@ module.exports = (cl) => {
         if (typeof msg.msg != 'object') return;
         if (msg.password !== cl.server.adminpass) return;
         cl.ws.emit("message", JSON.stringify([msg.msg]), true);
-        console.log(JSON.stringify([msg.msg]))
     })
     //admin only stuff
     cl.on('color', (msg, admin) => {
         if (!admin) return;
-        console.log(typeof cl.channel.verifyColor(msg.color))
         if (typeof cl.channel.verifyColor(msg.color) != 'string') return;
         if (!msg.hasOwnProperty('id') && !msg.hasOwnProperty('_id')) return;
         cl.server.connections.forEach((usr) => {
-            if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {    
+            if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {
                 let user = new User(usr);
                 user.cl.user.color = msg.color;
                 user.getUserData().then((uSr) => {
@@ -154,14 +161,15 @@ module.exports = (cl) => {
                     if (!dbentry) return;
                     dbentry.color = msg.color;
                     //user.updatedb();
-                    console.log("Updateing user ", uSr.color, msg.color);
                     cl.server.rooms.forEach((room) => {
-                        room.updateParticipant(usr.participantId, {color: msg.color});
-                    })               
+                        room.updateParticipant(usr.participantId, {
+                            color: msg.color
+                        });
+                    })
                 })
             }
         })
-       
+
     })
 
 }

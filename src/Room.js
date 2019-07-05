@@ -13,7 +13,7 @@ class Room extends EventEmitter {
         this.crowndropped = false;
         this.settings = {
             lobby: this.isLobby(_id),
-            visible: settings.visible || true,
+            visible: settings.visible,
             crownsolo: settings.crownsolo || false,
             chat: settings.chat || true,
             color: this.verifyColor(settings.color) || this.getColor(_id),
@@ -294,7 +294,7 @@ class Room extends EventEmitter {
             m: "n",
             n: note.n,
             p: cl.participantId,
-            t: Date.now()
+            t: note.t
         }], cl, true);
     }
     kickban(_id, ms) {
