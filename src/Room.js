@@ -407,8 +407,10 @@ class Room extends EventEmitter {
         if(!isString(msg.set.color) || !/^#[0-9a-f]{6}$/i.test(msg.set.color)) msg.set.color = (!isObj(this.settings) ? this.server.defaultRoomColor : this.settings.color);
         if(isString(msg.set.color2)){
             if(!/^#[0-9a-f]{6}$/i.test(msg.set.color2)){
-                if(this.settings.color2) msg.set.color2 = this.settings.color2;
-                else delete msg.set.color2; // keep it nice and clean
+                if(this.settings){
+                    if(this.settings.color2) msg.set.color2 = this.settings.color2;
+                    else delete msg.set.color2; // keep it nice and clean
+                }
             }
         };
         return msg.set;
