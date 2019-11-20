@@ -202,13 +202,19 @@ class Room extends EventEmitter {
     }
     isLobby(_id) {
         if (_id.startsWith("lobby")) {
+            let lobbynum = _id.split("lobby")[1];
             if (_id == "lobby") {
                 return true;
-            } else if (parseFloat(_id.split("lobby")[1] % 1) === 0) {
-                return true;
-            } else {
-                return false;
-            }
+            } 
+            if (!(parseInt(lobbynum).toString() == lobbynum)) return false;
+                for (let i in lobbynum) {
+                    if (parseInt(lobbynum[i]) >= 0) {
+                        if (parseInt(i) + 1 == lobbynum.length) return true;
+                        
+                    } else {
+                        return false;
+                    }
+                }
         } else if (_id.startsWith("test/")) {
             if (_id == "test/") {
                 return false;
