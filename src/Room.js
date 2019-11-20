@@ -11,14 +11,7 @@ class Room extends EventEmitter {
         this.server = server;
         this.crown = null;
         this.crowndropped = false;
-        this.settings = {
-            lobby: this.isLobby(_id),
-            visible: settings.hasOwnProperty('visible') ? settings.visible : true,
-            crownsolo: settings.crownsolo || false,
-            chat: settings.chat || true,
-            color: this.verifyColor(settings.color) || this.getColor(_id),
-            color2: this.verifyColor(settings.color) || this.getColor2(_id)
-        }
+        this.settings = this.verifySet(this._id,{set:settings});
         this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
@@ -109,7 +102,6 @@ class Room extends EventEmitter {
         options.name ? this.ppl.get(pid).user.name = options.name : {};
         options._id ? this.ppl.get(pid).user._id = options._id : {};
         options.color ? this.ppl.get(pid).user.color = options.color : {};
-        options.name ? this.ppl.get(pid).user.name = options.name : {};
         this.connections.filter((ofo) => ofo.participantId == p.participantId).forEach((usr) => {
             options.name ? usr.user.name = options.name : {};
             options._id ? usr.user._id = options._id : {};
@@ -184,31 +176,22 @@ class Room extends EventEmitter {
         } else{
           return false;
         }
-      }
-    getColor(_id) {
-        if (this.isLobby(_id)) {
-            return this.server.defaultLobbyColor;
-        } else {
-            return this.server.defaultRoomColor;
-        }
-    }
-    getColor2(_id) {
-        if (this.isLobby(_id)) {
-            return this.server.defaultLobbyColor2;
-        } else {
-            return;
-            delete this.settings.color2;
-        }
     }
     isLobby(_id) {
         if (_id.startsWith("lobby")) {
+            let lobbynum = _id.split("lobby")[1];
             if (_id == "lobby") {
                 return true;
-            } else if (parseFloat(_id.split("lobby")[1] % 1) === 0) {
-                return true;
-            } else {
-                return false;
-            }
+            } 
+            if (!(parseInt(lobbynum).toString() == lobbynum)) return false;
+                for (let i in lobbynum) {
+                    if (parseInt(lobbynum[i]) >= 0) {
+                        if (parseInt(i) + 1 == lobbynum.length) return true;
+                        
+                    } else {
+                        return false;
+                    }
+                }
         } else if (_id.startsWith("test/")) {
             if (_id == "test/") {
                 return false;
@@ -401,6 +384,36 @@ class Room extends EventEmitter {
         this.on("a", (participant, msg) => {
             this.chat(participant, msg);
         })
+    }
+    verifySet(_id,msg){
+        if(!isObj(msg.set)) msg.set = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
+        if(isBool(msg.set.lobby)){
+            if(!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
+        }else{
+            if(this.isLobby(_id)) msg.set = {visible:true,color:this.server.defaultLobbyColor,color2:this.server.defaultLobbyColor2,chat:true,crownsolo:false,lobby:true};
+        }
+        if(!isBool(msg.set.visible)){
+            if(msg.set.visible == undefined) msg.set.visible = (!isObj(this.settings) ? true : this.settings.visible);
+            else msg.set.visible = true;
+        };
+        if(!isBool(msg.set.chat)){
+            if(msg.set.chat == undefined) msg.set.chat = (!isObj(this.settings) ? true : this.settings.chat);
+            else msg.set.chat = true;
+        };
+        if(!isBool(msg.set.crownsolo)){
+            if(msg.set.crownsolo == undefined) msg.set.crownsolo = (!isObj(this.settings) ? false : this.settings.crownsolo);
+            else msg.set.crownsolo = false;
+        };
+        if(!isString(msg.set.color) || !/^#[0-9a-f]{6}$/i.test(msg.set.color)) msg.set.color = (!isObj(this.settings) ? this.server.defaultRoomColor : this.settings.color);
+        if(isString(msg.set.color2)){
+            if(!/^#[0-9a-f]{6}$/i.test(msg.set.color2)){
+                if(this.settings){
+                    if(this.settings.color2) msg.set.color2 = this.settings.color2;
+                    else delete msg.set.color2; // keep it nice and clean
+                }
+            }
+        };
+        return msg.set;
     }
 
 }

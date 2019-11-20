@@ -55,15 +55,8 @@ module.exports = (cl) => {
     cl.on("chset", msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!(cl.user._id == cl.channel.crown.userId)) return;
-        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
-        let settings = {};
-        settings.lobby = cl.channel.isLobby(cl.channel._id);
-        settings.visible = !!msg.set.visible;
-        settings.crownsolo = !!msg.set.crownsolo;
-        settings.chat = !!msg.set.chat;
-        settings.color = cl.channel.verifyColor(msg.set.color) || cl.channel.settings.color;
-        settings.color2 = cl.channel.verifyColor(msg.set.color2) || cl.channel.settings.color2;
-        cl.channel.settings = settings;
+        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = cl.channel.verifySet(cl.channel._id,{});
+        cl.channel.settings = msg.set;
         cl.channel.updateCh();
     })
     cl.on("a", msg => {
