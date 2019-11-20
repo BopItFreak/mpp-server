@@ -68,6 +68,10 @@ class Room extends EventEmitter {
             cl.user.id = otheruser.participantId;
             cl.participantId = otheruser.participantId;
             this.connections.push(cl);
+            cl.sendArray([{
+                m: "c",
+                c: this.chatmsgs.slice(-1 * 32)
+            }])
             this.updateCh(cl);
         }
 
