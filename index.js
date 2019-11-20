@@ -5,6 +5,16 @@ global.fs = require('fs');
 global.createKeccakHash = require('keccak');
 const AsyncConsole = require('asyncconsole')
 
+global.isString = function(a){
+	return typeof a === 'string';
+}
+global.isBool = function(a){
+	return typeof a === 'boolean';
+}
+global.isObj = function(a){
+	return typeof a === "object" && !Array.isArray(a) && a !== null;
+}
+
 let Server = require("./src/Server.js");
 let config = require('./src/db/config.json');
 global.SERVER = new Server(config);

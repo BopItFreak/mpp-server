@@ -11,14 +11,7 @@ class Room extends EventEmitter {
         this.server = server;
         this.crown = null;
         this.crowndropped = false;
-        this.settings = {
-            lobby: this.isLobby(_id),
-            visible: settings.hasOwnProperty('visible') ? settings.visible : true,
-            crownsolo: settings.crownsolo || false,
-            chat: settings.chat || true,
-            color: this.verifyColor(settings.color) || this.getColor(_id),
-            color2: this.verifyColor(settings.color) || this.getColor2(_id)
-        }
+        this.settings = this.verifySet(this._id,settings);
         this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
@@ -183,21 +176,6 @@ class Room extends EventEmitter {
           return strColor;
         } else{
           return false;
-        }
-      }
-    getColor(_id) {
-        if (this.isLobby(_id)) {
-            return this.server.defaultLobbyColor;
-        } else {
-            return this.server.defaultRoomColor;
-        }
-    }
-    getColor2(_id) {
-        if (this.isLobby(_id)) {
-            return this.server.defaultLobbyColor2;
-        } else {
-            return;
-            delete this.settings.color2;
         }
     }
     isLobby(_id) {
@@ -407,6 +385,34 @@ class Room extends EventEmitter {
         this.on("a", (participant, msg) => {
             this.chat(participant, msg);
         })
+    }
+    verifySet(_id,msg){
+        if(!isObj(msg.set)) msg.set = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
+        if(isBool(msg.set.lobby)){
+            if(!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
+        }else{
+            if(this.isLobby(_id)) msg.set = {visible:true,color:this.server.defaultLobbyColor,color2:this.server.defaultLobbyColor2,chat:true,crownsolo:false,lobby:true};
+        }
+        if(!isBool(msg.set.visible)){
+            if(msg.set.visible == undefined) msg.set.visible = (room.settings.visible || true);
+            else msg.set.visible = true;
+        };
+        if(!isBool(msg.set.chat)){
+            if(msg.set.chat == undefined) msg.set.chat = (room.settings.chat || true);
+            else msg.set.chat = true;
+        };
+        if(!isBool(msg.set.crownsolo)){
+            if(msg.set.crownsolo == undefined) msg.set.crownsolo = (room.settings.crownsolo || false);
+            else msg.set.crownsolo = false;
+        };
+        if(!isString(msg.set.color) || !/^#[0-9a-f]{6}$/i.test(msg.set.color)) msg.set.color = (room.settings.color || this.server.defaultRoomColor);
+        if(isString(msg.set.color2)){
+            if(!/^#[0-9a-f]{6}$/i.test(msg.set.color2)){
+                if(room.settings.color2) msg.set.color2 = room.settings.color2;
+                else delete msg.set.color2; // keep it nice and clean
+            }
+        };
+        return msg.set;
     }
 
 }
