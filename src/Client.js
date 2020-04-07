@@ -82,7 +82,6 @@ class Client extends EventEmitter {
             chown: new RateLimitChain(quotas.chown.amount, quotas.chown.time),
             userset: new RateLimitChain(quotas.userset.amount, quotas.userset.time),
             kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
-            
             note: new Quota(Quota.PARAMS_LOBBY),
             chset: new Quota(Quota.PARAMS_USED_A_LOT),
             "+ls": new Quota(Quota.PARAMS_USED_A_LOT),

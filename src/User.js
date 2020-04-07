@@ -18,7 +18,6 @@ class User {
             if (typeof usertofind == 'object' && (usertofind.hasOwnProperty('name') && usertofind.name != this.server.defaultUsername)) return;
             userdb.set(_id, {
                 "color": `#${ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)).toLowerCase()}`,
-                "noteColor": `#${ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)).toLowerCase()}`,
                 "name": this.server.defaultUsername,
                 "_id": _id,
                 "ip": this.cl.ip
@@ -28,7 +27,6 @@ class User {
         let user = userdb.get(_id);
         return {
             "color": user.color,
-            "noteColor": user.noteColor,
             "name": user.name,
             "_id": user._id,
         }

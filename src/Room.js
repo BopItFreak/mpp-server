@@ -48,7 +48,7 @@ class Room extends EventEmitter {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
             }
             this.ppl.set(participantId, cl);
-            
+
             this.connections.push(cl);
             this.sendArray([{
                 color: this.ppl.get(cl.participantId).user.color,
@@ -110,17 +110,13 @@ class Room extends EventEmitter {
         options.name ? this.ppl.get(pid).user.name = options.name : {};
         options._id ? this.ppl.get(pid).user._id = options._id : {};
         options.color ? this.ppl.get(pid).user.color = options.color : {};
-        options.noteColor ? this.ppl.get(pid).user.noteColor = options.noteColor : {};
         this.connections.filter((ofo) => ofo.participantId == p.participantId).forEach((usr) => {
             options.name ? usr.user.name = options.name : {};
             options._id ? usr.user._id = options._id : {};
             options.color ? usr.user.color = options.color : {};
-            options.noteColor ? usr.user.noteColor = options.noteColor : {};
         })
         this.sendArray([{
             color: p.user.color,
-            noteColor: p.user.noteColor,
-            //noteColor: "#000",
             id: p.participantId,
             m: "p",
             name: p.user.name,
