@@ -1,3 +1,5 @@
+const config = require('./db/config');
+const quotas = config.quotas;
 const RateLimit = require('./RateLimit.js').RateLimit;
 const RateLimitChain = require('./RateLimit.js').RateLimitChain;
 const Room = require("./Room.js");
@@ -17,11 +19,12 @@ class Client extends EventEmitter {
         this.destroied = false;
         this.bindEventListeners();
         this.quotas = {
-            chat: new RateLimitChain(4, 4000),
-            name: new RateLimitChain(30, 30 * 60000),
-            cursor: new RateLimit(16),
-            kickban: new RateLimitChain(2, 1000),
-            crowned_chat: new RateLimitChain(10, 2000)
+            chat: new RateLimitChain(quotas.chat.amount, quotas.chat.time),
+            name: new RateLimitChain(quotas.name.amount, quotas.name.time),
+            room: new RateLimit(quotas.room.time),
+            cursor: new RateLimit(quotas.cursor.time),
+            kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
+            crowned_chat: new RateLimitChain(quotas.crowned_chat.amount, quotas.crowned_chat.time)
         }
         require('./Message.js')(this);
     }
