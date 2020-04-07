@@ -30,6 +30,7 @@ module.exports = (cl) => {
         }
     })
     cl.on("m", msg => {
+        if (!cl.cursQuota.attempt()) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
@@ -60,6 +61,15 @@ module.exports = (cl) => {
         cl.channel.updateCh();
     })
     cl.on("a", msg => {
+        if (cl.channel.isLobby(cl.channel._id)) {
+            if (!cl.chatQuota.attempt()) return;
+        } else {
+            if (!(cl.user._id == cl.channel.crown.userId)) {
+                if (!cl.chatQuota.attempt()) return;
+            } else {
+                if (!cl.crowned_chatQuota.attempt()) return;
+            }
+        }
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
         if (cl.channel.settings.chat) {
@@ -100,6 +110,7 @@ module.exports = (cl) => {
         cl.server.roomlisteners.delete(cl.connectionid);
     })
     cl.on("userset", msg => {
+        if (!cl.usersetQuota.attempt()) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
