@@ -29,12 +29,12 @@ module.exports = (cl) => {
             if (msg._id.length > 512) return;
             cl.setChannel(msg._id, msg.set);
             if (cl.channel.isLobby(cl.channel._id)) {
-                cl.channel.sendNotequota(quotas.note.lobby.allowance, quotas.note.lobby.max, quotas.note.lobby.maxHistLen);
+                cl.sendArray([{m: 'nq', allowance: quotas.note.lobby.allowance, max: quotas.note.lobby.max, maxHistLen: quotas.note.lobby.maxHistLen}])
             } else {
                 if (!(cl.user._id == cl.channel.crown.userId)) {
-                    cl.channel.sendNotequota(quotas.note.normal.allowance, quotas.note.normal.max, quotas.note.normal.maxHistLen);
+                    cl.sendArray([{m: 'nq', allowance: quotas.note.normal.allowance, max: quotas.note.normal.max, maxHistLen: quotas.note.normal.maxHistLen}])
                 } else {
-                    cl.channel.sendNotequota(quotas.note.insane.allowance, quotas.note.insane.max, quotas.note.insane.maxHistLen);
+                    cl.sendArray([{m: 'nq', allowance: quotas.note.insane.allowance, max: quotas.note.insane.max, maxHistLen: quotas.note.insane.maxHistLen}])
                 }
             }
         }
