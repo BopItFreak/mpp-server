@@ -1,3 +1,4 @@
+const Quota = require('./Quota');
 const User = require("./User.js");
 const Room = require("./Room.js");
 module.exports = (cl) => {
@@ -26,10 +27,28 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.hasOwnProperty("_id") && typeof msg._id == "string") {
             if (msg._id.length > 512) return;
+            if (!cl.staticQuotas.room.attempt()) return;
             cl.setChannel(msg._id, msg.set);
+            let param;
+            if (cl.channel.isLobby(cl.channel._id)) {
+                param =  Quota.N_PARAMS_LOBBY;
+                param.m = "nq";
+                cl.sendArray([param])
+            } else {
+                if (!(cl.user._id == cl.channel.crown.userId)) {
+                    param =  Quota.N_PARAMS_NORMAL;
+                    param.m = "nq";
+                    cl.sendArray([param])
+                } else {
+                    param =  Quota.N_PARAMS_RIDICULOUS;
+                    param.m = "nq";
+                    cl.sendArray([param])
+                }
+            }
         }
     })
-    cl.on("m", msg => {
+    cl.on("m", (msg, admin) => {
+        if (!cl.quotas.cursor.attempt() && !admin) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
@@ -38,7 +57,8 @@ module.exports = (cl) => {
         cl.channel.emit("m", cl, msg.x, msg.y)
 
     })
-    cl.on("chown", msg => {
+    cl.on("chown", (msg, admin) => {
+        if (!cl.quotas.chown.attempt() && !admin) return;
         if (!(cl.channel && cl.participantId)) return;
         //console.log((Date.now() - cl.channel.crown.time))
         //console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
@@ -47,9 +67,17 @@ module.exports = (cl) => {
             // console.log(cl.channel.crown)
             if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped)
                 cl.channel.chown(msg.id);
+                if (msg.id == cl.user.id) {
+                    param =  Quota.N_PARAMS_RIDICULOUS;
+                    param.m = "nq";
+                    cl.sendArray([param])
+                }
         } else {
             if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped)
                 cl.channel.chown();
+                param =  Quota.N_PARAMS_NORMAL;
+                param.m = "nq";
+                cl.sendArray([param])
         }
     })
     cl.on("chset", msg => {
@@ -59,10 +87,19 @@ module.exports = (cl) => {
         cl.channel.settings = msg.set;
         cl.channel.updateCh();
     })
-    cl.on("a", msg => {
+    cl.on("a", (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
         if (cl.channel.settings.chat) {
+            if (cl.channel.isLobby(cl.channel._id)) {
+                if (!cl.quotas.chat.lobby.attempt() && !admin) return;
+            } else {
+                if (!(cl.user._id == cl.channel.crown.userId)) {
+                    if (!cl.quotas.chat.normal.attempt() && !admin) return;
+                } else {
+                    if (!cl.quotas.chat.insane.attempt() && !admin) return;
+                }
+            }
             cl.channel.emit('a', cl, msg);
         }
     })
@@ -104,6 +141,7 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
             if (msg.set.name.length > 40) return;
+            if (!cl.quotas.name.attempt()) return;
             cl.user.name = msg.set.name;
             let user = new User(cl);
             user.getUserData().then((usr) => {
@@ -124,6 +162,7 @@ module.exports = (cl) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!(cl.user._id == cl.channel.crown.userId)) return;
         if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
+            if (!cl.quotas.kickban.attempt() && !admin) return;
             let _id = msg._id;
             let ms = msg.ms || 0;
             cl.channel.kickban(_id, ms);
@@ -153,7 +192,7 @@ module.exports = (cl) => {
                     let dbentry = user.userdb.get(uSr._id);
                     if (!dbentry) return;
                     dbentry.color = msg.color;
-                    //user.updatedb();
+                    user.updatedb();
                     cl.server.rooms.forEach((room) => {
                         room.updateParticipant(usr.participantId, {
                             color: msg.color

@@ -16,7 +16,7 @@ global.isObj = function(a){
 }
 
 let Server = require("./src/Server.js");
-let config = require('./src/db/config.json');
+let config = require('./config');
 global.SERVER = new Server(config);
 let console = process.platform == 'win32' ? new AsyncConsole("", input => {
     try {

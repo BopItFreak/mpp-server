@@ -1,4 +1,5 @@
-const Client = require("./Client.js")
+const Client = require("./Client.js");
+const banned = require('../banned.json');
 class Server extends EventEmitter {
     constructor(config) {
         super();
@@ -6,8 +7,9 @@ class Server extends EventEmitter {
         this.wss = new WebSocket.Server({
             port: config.port,
             backlog: 100,
-            verifyClient: function (info, done) {
-                done(true)
+            verifyClient: (info) => {
+                if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                return true;
             }
         });
         this.connectionid = 0;
