@@ -1,5 +1,4 @@
-const config = require('../config');
-const quotas = config.quotas;
+const quotas = require('../Quotas');
 const User = require("./User.js");
 module.exports = (cl) => {
     cl.once("hi", () => {
