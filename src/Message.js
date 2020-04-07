@@ -1,4 +1,5 @@
-const quotas = require('../Quotas');
+const NoteQuotas = require('../Quotas');
+let quotas;
 const User = require("./User.js");
 module.exports = (cl) => {
     cl.once("hi", () => {
@@ -12,6 +13,7 @@ module.exports = (cl) => {
             msg.v = "Beta";
             cl.sendArray([msg])
             cl.user = data;
+            quotas = cl.server.connections[cl.user._id].quotas;
         })
     })
     cl.on("t", msg => {
@@ -23,24 +25,24 @@ module.exports = (cl) => {
             }])
     })
     cl.on("ch", msg => {
-        if (!cl.quotas.room.attempt()) return;
+        if (!quotas.room.attempt()) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.hasOwnProperty("_id") && typeof msg._id == "string") {
             if (msg._id.length > 512) return;
             cl.setChannel(msg._id, msg.set);
             if (cl.channel.isLobby(cl.channel._id)) {
-                cl.sendArray([{m: 'nq', allowance: quotas.note.lobby.allowance, max: quotas.note.lobby.max, maxHistLen: quotas.note.lobby.maxHistLen}])
+                cl.sendArray([{m: 'nq', allowance: NoteQuotas.note.lobby.allowance, max: NoteQuotas.note.lobby.max, maxHistLen: NoteQuotas.note.lobby.maxHistLen}])
             } else {
                 if (!(cl.user._id == cl.channel.crown.userId)) {
-                    cl.sendArray([{m: 'nq', allowance: quotas.note.normal.allowance, max: quotas.note.normal.max, maxHistLen: quotas.note.normal.maxHistLen}])
+                    cl.sendArray([{m: 'nq', allowance: NoteQuotas.note.normal.allowance, max: NoteQuotas.note.normal.max, maxHistLen: NoteQuotas.note.normal.maxHistLen}])
                 } else {
-                    cl.sendArray([{m: 'nq', allowance: quotas.note.insane.allowance, max: quotas.note.insane.max, maxHistLen: quotas.note.insane.maxHistLen}])
+                    cl.sendArray([{m: 'nq', allowance: NoteQuotas.note.insane.allowance, max: NoteQuotas.note.insane.max, maxHistLen: NoteQuotas.note.insane.maxHistLen}])
                 }
             }
         }
     })
     cl.on("m", msg => {
-        if (!cl.quotas.cursor.attempt()) return;
+        if (!quotas.cursor.attempt()) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
@@ -50,7 +52,7 @@ module.exports = (cl) => {
 
     })
     cl.on("chown", msg => {
-        if (!cl.quotas.chown.attempt()) return;
+        if (!quotas.chown.attempt()) return;
         if (!(cl.channel && cl.participantId)) return;
         //console.log((Date.now() - cl.channel.crown.time))
         //console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
@@ -73,12 +75,12 @@ module.exports = (cl) => {
     })
     cl.on("a", msg => {
         if (cl.channel.isLobby(cl.channel._id)) {
-            if (!cl.quotas.chat.lobby.attempt()) return;
+            if (!quotas.chat.lobby.attempt()) return;
         } else {
             if (!(cl.user._id == cl.channel.crown.userId)) {
-                if (!cl.quotas.chat.normal.attempt()) return;
+                if (!quotas.chat.normal.attempt()) return;
             } else {
-                if (!cl.quotas.chat.insane.attempt()) return;
+                if (!quotas.chat.insane.attempt()) return;
             }
         }
         if (!(cl.channel && cl.participantId)) return;
@@ -121,7 +123,7 @@ module.exports = (cl) => {
         cl.server.roomlisteners.delete(cl.connectionid);
     })
     cl.on("userset", msg => {
-        if (!cl.quotas.name.attempt()) return;
+        if (!quotas.name.attempt()) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
@@ -143,7 +145,7 @@ module.exports = (cl) => {
         }
     })
     cl.on('kickban', msg => {
-        if (!cl.quotas.kickban.attempt()) return;
+        if (!quotas.kickban.attempt()) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!(cl.user._id == cl.channel.crown.userId)) return;
         if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {

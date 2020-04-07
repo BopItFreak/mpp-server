@@ -1,6 +1,3 @@
-const quotas = require('../Quotas');
-const RateLimit = require('./RateLimit.js').RateLimit;
-const RateLimitChain = require('./RateLimit.js').RateLimitChain;
 const Room = require("./Room.js");
 require('node-json-color-stringify');
 class Client extends EventEmitter {
@@ -17,19 +14,6 @@ class Client extends EventEmitter {
         this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
         this.destroied = false;
         this.bindEventListeners();
-        this.quotas = {
-            //note: new limiter(2000, { allowance:3000, max:24000, maxHistLen:3}),
-            chat: {
-                lobby: new RateLimitChain(quotas.chat.lobby.amount, quotas.chat.lobby.time),
-                normal: new RateLimitChain(quotas.chat.normal.amount, quotas.chat.normal.time),
-                insane: new RateLimitChain(quotas.chat.insane.amount, quotas.chat.insane.time)
-            },
-            name: new RateLimitChain(quotas.name.amount, quotas.name.time),
-            room: new RateLimit(quotas.room.time),
-            chown: new RateLimitChain(quotas.chown.amount, quotas.chown.time),
-            cursor: new RateLimit(quotas.cursor.time),
-            kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
-        }
         require('./Message.js')(this);
     }
     isConnected() {
