@@ -16,10 +16,13 @@ class Client extends EventEmitter {
         this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
         this.destroied = false;
         this.bindEventListeners();
-        this.cursQuota = new RateLimit(16);
-        this.chatQuota = new RateLimitChain(4, 4000);
-        this.usersetQuota = new RateLimitChain(30, 30 * 60000);
-        this.crowned_chatQuota = new RateLimitChain(10, 2000);
+        this.quotas = {
+            chat: new RateLimitChain(4, 4000),
+            name: new RateLimitChain(30, 30 * 60000),
+            cursor: new RateLimit(16),
+            kickban: new RateLimitChain(2, 1000),
+            crowned_chat: new RateLimitChain(10, 2000)
+        }
         require('./Message.js')(this);
     }
     isConnected() {
