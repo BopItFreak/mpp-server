@@ -1,21 +1,4 @@
 module.exports = Object.seal({
-    note: {
-        lobby: {
-            allowance: 200,
-            max: 600,
-            maxHistLen: 3
-        },
-        normal: {
-            allowance: 400,
-            max: 1200,
-            maxHistLen: 3
-        },
-        insane: {
-            allowance: 600,
-            max: 1800,
-            maxHistLen: 3
-        }
-    },
     chat: {
         lobby: {
             amount: 4,
@@ -34,7 +17,7 @@ module.exports = Object.seal({
         amount: 10,
         time: 5000
     },
-    name: {
+    userset: {
         amount: 30,
         time: 30 * 60000
     },

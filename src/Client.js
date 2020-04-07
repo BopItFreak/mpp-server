@@ -1,4 +1,8 @@
 const Room = require("./Room.js");
+const Quota = require ("./Quota.js");
+const quotas = require('../Quotas');
+const RateLimit = require('./RateLimit.js').RateLimit;
+const RateLimitChain = require('./RateLimit.js').RateLimitChain;
 require('node-json-color-stringify');
 class Client extends EventEmitter {
     constructor(ws, req, server) {
@@ -9,6 +13,10 @@ class Client extends EventEmitter {
         this.server = server;
         this.participantId;
         this.channel;
+        this.staticQuotas = {
+            room: new RateLimit(quotas.room.time)
+        };
+        this.quotas = {};
         this.ws = ws;
         this.req = req;
         this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
@@ -60,6 +68,25 @@ class Client extends EventEmitter {
         if (this.isConnected()) {
             //console.log(`SEND: `, JSON.colorStringify(arr));
             this.ws.send(JSON.stringify(arr));
+        }
+    }
+    initParticipantQuotas() {
+        this.quotas = {
+            //"chat": new Quota(Quota.PARAMS_A_NORMAL),
+            chat: {
+                lobby: new RateLimitChain(quotas.chat.lobby.amount, quotas.chat.lobby.time),
+                normal: new RateLimitChain(quotas.chat.normal.amount, quotas.chat.normal.time),
+                insane: new RateLimitChain(quotas.chat.insane.amount, quotas.chat.insane.time)
+            },
+            cursor: new RateLimit(quotas.cursor.time),
+            chown: new RateLimitChain(quotas.chown.amount, quotas.chown.time),
+            userset: new RateLimitChain(quotas.userset.amount, quotas.userset.time),
+            kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
+            
+            note: new Quota(Quota.PARAMS_LOBBY),
+            chset: new Quota(Quota.PARAMS_USED_A_LOT),
+            "+ls": new Quota(Quota.PARAMS_USED_A_LOT),
+            "-ls": new Quota(Quota.PARAMS_USED_A_LOT)
         }
     }
     destroy() {

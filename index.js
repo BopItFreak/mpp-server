@@ -15,7 +15,7 @@ global.isObj = function(a){
 	return typeof a === "object" && !Array.isArray(a) && a !== null;
 }
 
-let Server = require("./src/Server");
+let Server = require("./src/Server.js");
 let config = require('./config');
 global.SERVER = new Server(config);
 let console = process.platform == 'win32' ? new AsyncConsole("", input => {

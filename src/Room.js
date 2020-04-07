@@ -2,7 +2,7 @@
 //room class
 //room deleter
 //databases in Map
-
+const Quota = require("./Quota.js");
 class Room extends EventEmitter {
     constructor(server, _id, settings) {
         super();
@@ -11,7 +11,9 @@ class Room extends EventEmitter {
         this.server = server;
         this.crown = null;
         this.crowndropped = false;
-        this.settings = this.verifySet(this._id,{set:settings});
+        this.settings = this.verifySet(this._id, {
+            set: settings
+        });
         this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
@@ -25,7 +27,9 @@ class Room extends EventEmitter {
             let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
             cl.user.id = participantId;
             cl.participantId = participantId;
+            cl.initParticipantQuotas();
             if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && !this.isLobby(this._id)) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
+                //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
                 this.crown = {
                     participantId: cl.participantId,
                     userId: cl.user._id,
@@ -40,8 +44,11 @@ class Room extends EventEmitter {
                     }
                 }
                 this.crowndropped = false;
+            } else {
+                //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
             }
             this.ppl.set(participantId, cl);
+            
             this.connections.push(cl);
             this.sendArray([{
                 color: this.ppl.get(cl.participantId).user.color,
@@ -60,6 +67,7 @@ class Room extends EventEmitter {
         } else {
             cl.user.id = otheruser.participantId;
             cl.participantId = otheruser.participantId;
+            cl.quotas = otheruser.quotas;
             this.connections.push(cl);
             cl.sendArray([{
                 m: "c",
@@ -173,12 +181,12 @@ class Room extends EventEmitter {
         }
         return data;
     }
-    verifyColor(strColor){
+    verifyColor(strColor) {
         var test2 = /^#[0-9A-F]{6}$/i.test(strColor);
-        if(test2 == true){
-          return strColor;
-        } else{
-          return false;
+        if (test2 == true) {
+            return strColor;
+        } else {
+            return false;
         }
     }
     isLobby(_id) {
@@ -186,16 +194,16 @@ class Room extends EventEmitter {
             let lobbynum = _id.split("lobby")[1];
             if (_id == "lobby") {
                 return true;
-            } 
+            }
             if (!(parseInt(lobbynum).toString() == lobbynum)) return false;
-                for (let i in lobbynum) {
-                    if (parseInt(lobbynum[i]) >= 0) {
-                        if (parseInt(i) + 1 == lobbynum.length) return true;
-                        
-                    } else {
-                        return false;
-                    }
+            for (let i in lobbynum) {
+                if (parseInt(lobbynum[i]) >= 0) {
+                    if (parseInt(i) + 1 == lobbynum.length) return true;
+
+                } else {
+                    return false;
                 }
+            }
         } else if (_id.startsWith("test/")) {
             if (_id == "test/") {
                 return false;

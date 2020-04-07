@@ -1,6 +1,3 @@
-const quotas = require('../Quotas');
-const RateLimit = require('./RateLimit.js').RateLimit;
-const RateLimitChain = require('./RateLimit.js').RateLimitChain;
 const ColorEncoder = require("./ColorEncoder.js");
 const { promisify } = require('util');
 let userdb;
@@ -16,26 +13,6 @@ class User {
             await this.setUpDb();
         }
         let _id = createKeccakHash('keccak256').update((this.cl.server._id_Private_Key + this.cl.ip)).digest('hex').substr(0, 24);
-        if(this.server.connections[_id]){ // Connection rate quota?
-            //if(this.connectionsObjects[_id].connections.length < 10) this.connectionsObjects[_id].connections.push({room:undefined,ws:ws,cl:new Connection(ws)});
-        }else{
-            this.server.connections[_id] = {
-                quotas:{
-                    //note: new limiter(2000, { allowance:3000, max:24000, maxHistLen:3}),
-                    chat: {
-                        lobby: new RateLimitChain(quotas.chat.lobby.amount, quotas.chat.lobby.time),
-                        normal: new RateLimitChain(quotas.chat.normal.amount, quotas.chat.normal.time),
-                        insane: new RateLimitChain(quotas.chat.insane.amount, quotas.chat.insane.time)
-                    },
-                    name: new RateLimitChain(quotas.name.amount, quotas.name.time),
-                    room: new RateLimit(quotas.room.time),
-                    chown: new RateLimitChain(quotas.chown.amount, quotas.chown.time),
-                    cursor: new RateLimit(quotas.cursor.time),
-                    kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
-                }
-            };
-        };
-        //console.log("CONNECTED IP: " + this.cl.ip);
         let usertofind = userdb.get(_id);
         if (!usertofind) {
             if (typeof usertofind == 'object' && (usertofind.hasOwnProperty('name') && usertofind.name != this.server.defaultUsername)) return;
