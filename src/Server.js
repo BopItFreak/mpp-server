@@ -9,7 +9,6 @@ class Server extends EventEmitter {
             port: config.port,
             backlog: 100,
             verifyClient: (info) => {
-                //if (banned.includes(info.req.headers['x-forwarded-for'].split(",")[0].replace('::ffff:', ''))) return false;
                 if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
                 return true;
             }
@@ -21,7 +20,30 @@ class Server extends EventEmitter {
         this.wss.on('connection', (ws, req) => {
             this.connections.set(++this.connectionid, new Client(ws, req, this));
         });
-        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color"]
+        this.legit_m = [
+            "a",
+            "bye",
+            "hi",
+            "ch",
+            "+ls",
+            "-ls",
+            "m",
+            "n",
+            "devices",
+            "t",
+            "chset",
+            "userset",
+            "chown",
+            "kickban",
+          
+            "admin message",
+            "admin_color",
+            "admin_noteColor",
+            "admin_chset",
+            "admin_chown",
+            "admin_kickban",
+            "admin_notification"
+        ];
         this.welcome_motd = config.motd || "You agree to read this message.";   
         this._id_Private_Key = config._id_PrivateKey || "boppity";
         this.defaultUsername = config.defaultUsername || "Anonymous";

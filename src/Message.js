@@ -157,7 +157,7 @@ module.exports = (cl) => {
     cl.on("bye", msg => {
         cl.destroy();
     })
-    cl.on("admin message", msg => {
+    cl.on("admin message" || "adminmsg" || "admin msg", msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('password') || !msg.hasOwnProperty('msg')) return;
         if (typeof msg.msg != 'object') return;
@@ -189,7 +189,7 @@ module.exports = (cl) => {
                     if (!dbentry) return;
                     dbentry.color = msg.color;
                     dbentry.noteColor = msg.color;
-                    //user.updatedb();
+                    user.updatedb();
                     cl.server.rooms.forEach((room) => {
                         room.updateParticipant(usr.participantId, {
                             color: msg.color,
