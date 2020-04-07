@@ -1,8 +1,8 @@
 const Room = require("./Room.js");
 const Quota = require ("./Quota.js");
 const quotas = require('../Quotas');
-const RateLimit = require('./RateLimit.js').RateLimit;
-const RateLimitChain = require('./RateLimit.js').RateLimitChain;
+const RateLimit = require('./Ratelimit.js').RateLimit;
+const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
 require('node-json-color-stringify');
 class Client extends EventEmitter {
     constructor(ws, req, server) {
