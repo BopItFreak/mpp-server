@@ -23,6 +23,7 @@ module.exports = (cl) => {
             }])
     })
     cl.on("ch", msg => {
+        if (!cl.quotas.room.attempt()) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.hasOwnProperty("_id") && typeof msg._id == "string") {
             if (msg._id.length > 512) return;
