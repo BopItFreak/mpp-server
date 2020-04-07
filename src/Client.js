@@ -1,3 +1,5 @@
+const RateLimit = require('./RateLimit.js').RateLimit;
+const RateLimitChain = require('./RateLimit.js').RateLimitChain;
 const Room = require("./Room.js");
 require('node-json-color-stringify');
 class Client extends EventEmitter {
@@ -14,6 +16,10 @@ class Client extends EventEmitter {
         this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
         this.destroied = false;
         this.bindEventListeners();
+        this.cursQuota = new RateLimit(16);
+        this.chatQuota = new RateLimitChain(4, 4000);
+        this.nameQuota = new RateLimitChain(30, 30 * 60000);
+        this.crowned_chatQuota = new RateLimitChain(10, 2000);
         require('./Message.js')(this);
     }
     isConnected() {
