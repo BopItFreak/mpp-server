@@ -1,4 +1,4 @@
-const config = require('./db/config');
+const config = require('../config');
 const quotas = config.quotas;
 const User = require("./User.js");
 module.exports = (cl) => {
