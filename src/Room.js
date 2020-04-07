@@ -288,14 +288,6 @@ class Room extends EventEmitter {
             t: note.t
         }], cl, true);
     }
-    sendNotequota(allowance = 200, max = 600, maxHistLen = 3){
-        this.sendArray([{
-            m: 'nq',
-            allowance: allowance, 
-            max: max, 
-            maxHistLen: maxHistLen
-        }])
-    }
     kickban(_id, ms) {
         ms = parseInt(ms);
         if (ms >= (1000 * 60 * 60 - 500)) return;
