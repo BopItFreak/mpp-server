@@ -1,12 +1,12 @@
 module.exports = Object.seal({
-    "port": "8080",
+    "port": "3000",
     "motd": "You agree to read this message.",
     "_id_PrivateKey": "boppity",
     "defaultUsername": "Anonymous",
     "defaultRoomColor": "#3b5054",
     "defaultLobbyColor": "#19b4b9",
     "defaultLobbyColor2": "#801014",
-    "adminpass": "adminpass_h4gKJCX2",
+    "adminpass": "adminpass",
     "quotas":{
         "chat":{
             "amount": 4,
