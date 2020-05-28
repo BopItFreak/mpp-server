@@ -107,7 +107,7 @@ class Room extends EventEmitter {
     updateParticipant(pid, options) {
         let p = null;
         Array.from(this.ppl).map(rpg => {
-            if(e[1].user._id == pid) p = e[1];
+            if(rpg[1].user._id == pid) p = rpg[1];
         });
         if (p == null) return;
         options.name ? p.user.name = options.name : {};
