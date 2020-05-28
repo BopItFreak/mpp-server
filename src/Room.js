@@ -105,11 +105,14 @@ class Room extends EventEmitter {
         this.server.updateRoom(this.fetchData());
     }
     updateParticipant(pid, options) {
-        let p = this.ppl.get(pid);
-        if (!p) return;
-        options.name ? this.ppl.get(pid).user.name = options.name : {};
-        options._id ? this.ppl.get(pid).user._id = options._id : {};
-        options.color ? this.ppl.get(pid).user.color = options.color : {};
+        let p = null;
+        Array.from(this.ppl).map(rpg => {
+            if(e[1].user._id == pid) p = e[1];
+        });
+        if (p == null) return;
+        options.name ? p.user.name = options.name : {};
+        options._id ? p.user._id = options._id : {};
+        options.color ? p.user.color = options.color : {};
         this.connections.filter((ofo) => ofo.participantId == p.participantId).forEach((usr) => {
             options.name ? usr.user.name = options.name : {};
             options._id ? usr.user._id = options._id : {};
