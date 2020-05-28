@@ -112,7 +112,7 @@ module.exports = (cl) => {
                 dbentry.name = msg.set.name;
                 user.updatedb();
                 cl.server.rooms.forEach((room) => {
-                    room.updateParticipant(cl.participantId, {
+                    room.updateParticipant(cl.user._id, {
                         name: msg.set.name
                     });
                 })
@@ -155,7 +155,7 @@ module.exports = (cl) => {
                     dbentry.color = msg.color;
                     //user.updatedb();
                     cl.server.rooms.forEach((room) => {
-                        room.updateParticipant(usr.participantId, {
+                        room.updateParticipant(usr.user._id, {
                             color: msg.color
                         });
                     })
