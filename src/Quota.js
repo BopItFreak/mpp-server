@@ -105,8 +105,9 @@ class Quota {
         var allowance = params.allowance || this.allowance || Quota.PARAMS_OFFLINE.allowance;
         var max = params.max || this.max || Quota.PARAMS_OFFLINE.max;
         var maxHistLen = params.maxHistLen || this.maxHistLen || Quota.PARAMS_OFFLINE.maxHistLen;
-        let interval = params.interval || 0 
-        this.inverval = setInterval(() => {
+        let interval = params.interval || 0;
+	clearInterval(this.interval);
+        this.interval = setInterval(() => {
             this.tick();
         }, params.interval)
         if (allowance !== this.allowance || max !== this.max || maxHistLen !== this.maxHistLen) {
