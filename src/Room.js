@@ -421,6 +421,8 @@ class Room extends EventEmitter {
                 if(this.settings){
                     if(this.settings.color2) msg.set.color2 = this.settings.color2;
                     else delete msg.set.color2; // keep it nice and clean
+                } else {
+                    delete msg.set.color2;
                 }
             }
         };
