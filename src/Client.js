@@ -100,6 +100,7 @@ class Client extends EventEmitter {
         this.connectionid;
         this.server.connections.delete(this.connectionid);
         this.destroied = true;
+        console.log(`Removed Connection ${this.connectionid}.`);
     }
     bindEventListeners() {
         this.ws.on("message", (evt, admin) => {
