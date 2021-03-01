@@ -28,6 +28,7 @@ class Room extends EventEmitter {
             cl.user.id = participantId;
             cl.participantId = participantId;
             cl.initParticipantQuotas();
+            console.log(`New client(${cl.user._id}): ${cl.ip}`);
             if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && !this.isLobby(this._id)) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
                 this.crown = {
@@ -44,8 +45,10 @@ class Room extends EventEmitter {
                     }
                 }
                 this.crowndropped = false;
+                this.settings = {visible:true,color:this.server.defaultRoomColor,color2:this.server.defaultRoomColor2,chat:true,crownsolo:false};
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
+                this.settings = {visible:true,color:this.server.defaultRoomColor,color2:this.server.defaultRoomColor2,chat:true,crownsolo:false,lobby:true};
             }
             this.ppl.set(participantId, cl);
 
@@ -63,7 +66,7 @@ class Room extends EventEmitter {
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
             }])
-            this.updateCh(cl);
+            this.updateCh(cl, this.settings);
         } else {
             cl.user.id = otheruser.participantId;
             cl.participantId = otheruser.participantId;
@@ -73,16 +76,16 @@ class Room extends EventEmitter {
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
             }])
-            this.updateCh(cl);
+            this.updateCh(cl, this.settings);
         }
 
     }
     remove(p) { //this is complicated too
         let otheruser = this.connections.filter((a) => a.user._id == p.user._id);
+        console.log(`Deleted client: ${p.ip}`);
         if (!(otheruser.length > 1)) {
             this.ppl.delete(p.participantId);
             this.connections.splice(this.connections.findIndex((a) => a.connectionid == p.connectionid), 1);
-            console.log(`Deleted client ${p.user.id}`);
             this.sendArray([{
                 m: "bye",
                 p: p.participantId
@@ -130,7 +133,6 @@ class Room extends EventEmitter {
     }
     destroy() { //destroy room
         this._id;
-        console.log(`Deleted room ${this._id}`);
         this.settings = {};
         this.ppl;
         this.connnections;
@@ -268,9 +270,6 @@ class Room extends EventEmitter {
     }
     chat(p, msg) {
         if (msg.message.length > 512) return;
-        let filter = ["AMIGHTYWIND"];
-        let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
-        if (regexp.test(msg.message)) return;
         let prsn = this.ppl.get(p.participantId);
         if (prsn) {
             let message = {};
@@ -297,13 +296,13 @@ class Room extends EventEmitter {
     }
     kickban(_id, ms) {
         ms = parseInt(ms);
-        if (ms >= (1000 * 60 * 60 - 500)) return;
+        if (ms >= (1000 * 60 * 60)) return;
+        if (ms === 0) return 3600000;
         if (ms < 0) return;
         ms = Math.round(ms / 1000) * 1000;
         let user = this.connections.find((usr) => usr.user._id == _id);
         if (!user) return;
         let asd = true;
-        let tonc = true;
         let pthatbanned = this.ppl.get(this.crown.participantId);
         this.connections.filter((usr) => usr.participantId == user.participantId).forEach((u) => {
             user.bantime = Math.floor(Math.floor(ms / 1000) / 60);
@@ -311,7 +310,17 @@ class Room extends EventEmitter {
             user.msbanned = ms;
             this.bans.set(user.user._id, user);
             if (this.crown && (this.crown.userId)) {
-                u.setChannel("test/awkward", {});
+               if (this.crown && this.crown.userId == _id) {
+                    this.Notification("room",
+                        "Certificate of Award",
+                        `Let it be known that ${user.user.name} kickbanned him/her self.`,
+                        "",
+                        7000,
+                        "#room"
+                    );
+                    return;
+                }
+                u.setChannel("lobby", {});
                 if (asd)
                     this.Notification(user.user._id,
                         "Notice",
@@ -330,17 +339,6 @@ class Room extends EventEmitter {
                         "#room",
                         "short"
                     )
-                if (this.crown && (this.crown.userId == _id) && tonc) {
-                    this.Notification("room",
-                        "Certificate of Award",
-                        `Let it be known that ${user.user.name} kickbanned him/her self.`,
-                        "",
-                        7000,
-                        "#room"
-                    );
-                    tonc = false;
-                }
-
             }
 
         })
@@ -397,11 +395,11 @@ class Room extends EventEmitter {
         })
     }
     verifySet(_id,msg){
-        if(!isObj(msg.set)) msg.set = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
+        if(!isObj(msg.set)) msg.set = {visible:true,color:this.server.defaultRoomColor,defaultRoomColor2,chat:true,crownsolo:false};
         if(isBool(msg.set.lobby)){
             if(!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
         }else{
-            if(this.isLobby(_id)) msg.set = {visible:true,color:this.server.defaultLobbyColor,color2:this.server.defaultLobbyColor2,chat:true,crownsolo:false,lobby:true};
+            if(this.isLobby(_id)) msg.set = {visible:true,color:this.server.defaultRoomColor,color2:this.server.defaultRoomColor2,chat:true,crownsolo:false,lobby:true};
         }
         if(!isBool(msg.set.visible)){
             if(msg.set.visible == undefined) msg.set.visible = (!isObj(this.settings) ? true : this.settings.visible);
