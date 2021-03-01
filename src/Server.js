@@ -1,5 +1,6 @@
 const Client = require("./Client.js");
 const banned = require('../banned.json');
+
 class Server extends EventEmitter {
     constructor(config) {
         super();

@@ -33,14 +33,13 @@ class Client extends EventEmitter {
     setChannel(_id, settings) {
         if (this.channel && this.channel._id == _id) return;
         if (this.server.rooms.get(_id)) {
-            let room = this.server.rooms.get(_id);
+            let room = this.server.rooms.get(_id, settings);
             let userbanned = room.bans.get(this.user._id);
             if (userbanned && (Date.now() - userbanned.bannedtime >= userbanned.msbanned)) {
                 room.bans.delete(userbanned.user._id);
                 userbanned = undefined;
             }
             if (userbanned) {
-                console.log(Date.now() - userbanned.bannedtime)
                 room.Notification(this.user._id,
                     "Notice",
                     `Currently banned from \"${_id}\" for ${Math.ceil(Math.floor((userbanned.msbanned - (Date.now() - userbanned.bannedtime)) / 1000) / 60)} minutes.`,
@@ -49,6 +48,7 @@ class Client extends EventEmitter {
                     "#room",
                     "short"
                 );
+                this.setChannel("test/awkward", settings);
                 return;
             }
             let channel = this.channel;
@@ -100,7 +100,6 @@ class Client extends EventEmitter {
         this.connectionid;
         this.server.connections.delete(this.connectionid);
         this.destroied = true;
-        console.log(`Removed Connection ${this.connectionid}.`);
     }
     bindEventListeners() {
         this.ws.on("message", (evt, admin) => {
