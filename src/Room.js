@@ -44,8 +44,10 @@ class Room extends EventEmitter {
                     }
                 }
                 this.crowndropped = false;
+                this.settings = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
+                this.settings = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false,lobby:true};
             }
             this.ppl.set(participantId, cl);
 
@@ -63,7 +65,7 @@ class Room extends EventEmitter {
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
             }])
-            this.updateCh(cl);
+            this.updateCh(cl, this.settings);
         } else {
             cl.user.id = otheruser.participantId;
             cl.participantId = otheruser.participantId;
@@ -73,7 +75,7 @@ class Room extends EventEmitter {
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
             }])
-            this.updateCh(cl);
+            this.updateCh(cl, this.settings);
         }
 
     }
@@ -297,13 +299,12 @@ class Room extends EventEmitter {
     }
     kickban(_id, ms) {
         ms = parseInt(ms);
-        if (ms >= (1000 * 60 * 60 - 500)) return;
+        if (ms >= (1000 * 60 * 60)) return;
         if (ms < 0) return;
         ms = Math.round(ms / 1000) * 1000;
         let user = this.connections.find((usr) => usr.user._id == _id);
         if (!user) return;
         let asd = true;
-        let tonc = true;
         let pthatbanned = this.ppl.get(this.crown.participantId);
         this.connections.filter((usr) => usr.participantId == user.participantId).forEach((u) => {
             user.bantime = Math.floor(Math.floor(ms / 1000) / 60);
@@ -330,7 +331,7 @@ class Room extends EventEmitter {
                         "#room",
                         "short"
                     )
-                if (this.crown && (this.crown.userId == _id) && tonc) {
+                if (this.crown && (this.crown.userId == _id)) {
                     this.Notification("room",
                         "Certificate of Award",
                         `Let it be known that ${user.user.name} kickbanned him/her self.`,
@@ -338,7 +339,6 @@ class Room extends EventEmitter {
                         7000,
                         "#room"
                     );
-                    tonc = false;
                 }
 
             }

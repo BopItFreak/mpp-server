@@ -31,20 +31,16 @@ module.exports = (cl) => {
             cl.setChannel(msg._id, msg.set);
             let param;
             if (cl.channel.isLobby(cl.channel._id)) {
-                param =  Quota.N_PARAMS_LOBBY;
-                param.m = "nq";
-                cl.sendArray([param])
+                param = Quota.N_PARAMS_LOBBY;
             } else {
                 if (!(cl.user._id == cl.channel.crown.userId)) {
-                    param =  Quota.N_PARAMS_NORMAL;
-                    param.m = "nq";
-                    cl.sendArray([param])
+                    param = Quota.N_PARAMS_NORMAL;
                 } else {
-                    param =  Quota.N_PARAMS_RIDICULOUS;
-                    param.m = "nq";
-                    cl.sendArray([param])
+                    param = Quota.N_PARAMS_RIDICULOUS;
                 }
             }
+            param.m = "nq";
+            cl.sendArray([param])
         }
     })
     cl.on("m", (msg, admin) => {
@@ -141,7 +137,7 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
             if (msg.set.name.length > 40) return;
-            if (!cl.quotas.name.attempt()) return;
+            if(!cl.quotas.name.attempt()) return;
             cl.user.name = msg.set.name;
             let user = new User(cl);
             user.getUserData().then((usr) => {
@@ -159,12 +155,14 @@ module.exports = (cl) => {
         }
     })
     cl.on('kickban', msg => {
+        if (cl.channel.crown == null) return;
         if (!(cl.channel && cl.participantId)) return;
+        if (!cl.channel.crown.userId) return;
         if (!(cl.user._id == cl.channel.crown.userId)) return;
         if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
             if (!cl.quotas.kickban.attempt() && !admin) return;
             let _id = msg._id;
-            let ms = msg.ms || 0;
+            let ms = msg.ms || 3600000;
             cl.channel.kickban(_id, ms);
         }
     })
