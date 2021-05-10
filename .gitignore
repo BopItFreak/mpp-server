@@ -1,0 +1,4 @@
+node_modules
+
+# hri - this for my vscode idk y it make these files but keep them out
+.history
