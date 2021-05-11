@@ -2,7 +2,9 @@
 //room class
 //room deleter
 //databases in Map
+const Crown = require("./Crown.js");
 const Quota = require("./Quota.js");
+const RoomSettings = require("./RoomSettings.js");
 class Room extends EventEmitter {
     constructor(server, _id, settings) {
         super();
@@ -22,7 +24,7 @@ class Room extends EventEmitter {
         this.bans = new Map();
     }
 
-    join(cl) { //this stuff is complicated
+    join(cl, set) { //this stuff is complicated
         let otheruser = this.connections.find((a) => a.user._id == cl.user._id)
         if (!otheruser) {
             let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
@@ -30,63 +32,67 @@ class Room extends EventEmitter {
             cl.user.id = participantId;
             cl.participantId = participantId;
             cl.initParticipantQuotas();
-
-            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && !this.isLobby(this._id)) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
+            
+            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
-                this.crown = {
-                    participantId: cl.participantId,
-                    userId: cl.user._id,
-                    time: Date.now(),
-                    startPos: {
-                        x: 50,
-                        y: 50
-                    },
-                    endPos: {
-                        x: this.getCrownX(),
-                        y: this.getCrownY()
-                    }
-                }
+                this.crown = new Crown(cl.participantId, cl.user._id);
 
                 this.crowndropped = false;
-                this.settings = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
+                this.settings = new RoomSettings(set, 'user');
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
-                this.settings = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false,lobby:true};
+
+                if (this.isLobby(this._id)) {
+                    this.settings = new RoomSettings(this.server.lobbySettings, 'user');
+                    this.settings.visible = true;
+                    this.settings.crownsolo = false;
+                    this.settings.color = this.server.lobbySettings.color;
+                    this.settings.color2 = this.server.lobbySettings.color2;
+                    this.settings.lobby = true;
+                } else {
+                    if (typeof(set) == 'undefined') {
+                        if (typeof(this.settings) == 'undefined') {
+                            this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                        } else {
+                            this.settings = new RoomSettings(cl.channel.settings, 'user');
+                        }
+                    } else {
+                        this.settings = new RoomSettings(set, 'user');
+                    }
+                }
             }
 
             this.ppl.set(participantId, cl);
 
             this.connections.push(cl);
 
-            this.sendArray([{
-                color: this.ppl.get(cl.participantId).user.color,
-                id: this.ppl.get(cl.participantId).participantId,
-                m: "p",
-                name: this.ppl.get(cl.participantId).user.name,
-                x: this.ppl.get(cl.participantId).x || 200,
-                y: this.ppl.get(cl.participantId).y || 100,
-                _id: cl.user._id
-            }], cl, false)
-            cl.sendArray([{
-                m: "c",
-                c: this.chatmsgs.slice(-1 * 32)
-            }])
+            if (!cl.hidden) {
+                this.sendArray([{
+                    color: this.ppl.get(cl.participantId).user.color,
+                    id: this.ppl.get(cl.participantId).participantId,
+                    m: "p",
+                    name: this.ppl.get(cl.participantId).user.name,
+                    x: this.ppl.get(cl.participantId).x || 200,
+                    y: this.ppl.get(cl.participantId).y || 100,
+                    _id: cl.user._id
+                }], cl, false)
+                cl.sendArray([{
+                    m: "c",
+                    c: this.chatmsgs.slice(-1 * 32)
+                }]);
+            }
             this.updateCh(cl, this.settings);
         } else {
             cl.user.id = otheruser.participantId;
             cl.participantId = otheruser.participantId;
             cl.quotas = otheruser.quotas;
-
             this.connections.push(cl);
-
             cl.sendArray([{
                 m: "c",
                 c: this.chatmsgs.slice(-1 * 32)
-            }]);
-
+            }])
             this.updateCh(cl, this.settings);
         }
-
     }
 
     remove(p) { //this is complicated too
@@ -208,7 +214,7 @@ class Room extends EventEmitter {
             return false;
         }
     }
-    
+
     isLobby(_id) {
         if (_id.startsWith("lobby")) {
             let lobbynum = _id.split("lobby")[1];
@@ -287,9 +293,10 @@ class Room extends EventEmitter {
             }], p, false);
         }
     }
+
     chat(p, msg) {
         if (msg.message.length > 512) return;
-        let filter = ["AMIGHTYWIND"];
+        let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
         let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
         if (regexp.test(msg.message)) return;
         let prsn = this.ppl.get(p.participantId);
@@ -308,6 +315,7 @@ class Room extends EventEmitter {
             this.chatmsgs.push(message);
         }
     }
+
     playNote(cl, note) {
         this.sendArray([{
             m: "n",
@@ -316,6 +324,7 @@ class Room extends EventEmitter {
             t: note.t
         }], cl, true);
     }
+
     kickban(_id, ms) {
         ms = parseInt(ms);
         if (ms >= (1000 * 60 * 60)) return;
@@ -364,6 +373,7 @@ class Room extends EventEmitter {
 
         })
     }
+
     Notification(who, title, text, html, duration, target, klass, id) {
         let obj = {
             m: "notification",
@@ -402,6 +412,7 @@ class Room extends EventEmitter {
             }
         }
     }
+
     bindEventListeners() {
         this.on("bye", participant => {
             this.remove(participant);
@@ -415,37 +426,27 @@ class Room extends EventEmitter {
             this.chat(participant, msg);
         })
     }
+
     verifySet(_id,msg){
-        if(!isObj(msg.set)) msg.set = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
-        if(isBool(msg.set.lobby)){
-            if(!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
-        }else{
-            if(this.isLobby(_id)) msg.set = {visible:true,color:this.server.defaultLobbyColor,color2:this.server.defaultLobbyColor2,chat:true,crownsolo:false,lobby:true};
+        if(typeof(msg.set) !== 'object') {
+            msg.set = {
+                visible: true,
+                color: this.server.defaultSettings.color, chat:true,
+                crownsolo:false
+            }
         }
-        if(!isBool(msg.set.visible)){
-            if(msg.set.visible == undefined) msg.set.visible = (!isObj(this.settings) ? true : this.settings.visible);
-            else msg.set.visible = true;
-        };
-        if(!isBool(msg.set.chat)){
-            if(msg.set.chat == undefined) msg.set.chat = (!isObj(this.settings) ? true : this.settings.chat);
-            else msg.set.chat = true;
-        };
-        if(!isBool(msg.set.crownsolo)){
-            if(msg.set.crownsolo == undefined) msg.set.crownsolo = (!isObj(this.settings) ? false : this.settings.crownsolo);
-            else msg.set.crownsolo = false;
-        };
-        if(!isString(msg.set.color) || !/^#[0-9a-f]{6}$/i.test(msg.set.color)) msg.set.color = (!isObj(this.settings) ? this.server.defaultRoomColor : this.settings.color);
-        if(isString(msg.set.color2)){
-            if(!/^#[0-9a-f]{6}$/i.test(msg.set.color2)){
-                if(this.settings){
-                    if(this.settings.color2) msg.set.color2 = this.settings.color2;
-                    else delete msg.set.color2; // keep it nice and clean
-                } else {
-                    delete msg.set.color2;
+
+        msg.set = RoomSettings.changeSettings(msg.set);
+        
+        if (typeof(msg.set.lobby) !== 'undefined') {
+            if (msg.set.lobby == true) {
+                if (!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
+            } else {
+                if (this.isLobby(_id)) {
+                    msg.set = this.server.lobbySettings;
                 }
             }
-        };
-        return msg.set;
+        }
     }
 
 }

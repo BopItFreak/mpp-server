@@ -6,5 +6,11 @@ module.exports = Object.seal({
     defaultRoomColor: "#3b5054",
     defaultLobbyColor: "#19b4b9",
     defaultLobbyColor2: "#801014",
-    adminpass: "adminpass"
+    adminpass: "adminpass",
+    defaultRoomSettings: {
+        color: "#3b5054",
+        color2: "#001014",
+        crownsolo: false,
+        visible: true
+    }
 });

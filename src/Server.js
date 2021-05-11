@@ -1,5 +1,6 @@
 const Client = require("./Client.js");
 const banned = require('../banned.json');
+const RoomSettings = require("./RoomSettings.js");
 
 class Server extends EventEmitter {
     constructor(config) {
@@ -29,10 +30,12 @@ class Server extends EventEmitter {
         this._id_Private_Key = config._id_PrivateKey || "boppity";
 
         this.defaultUsername = config.defaultUsername || "Anonymous";
+        this.defaultRoomSettings = new RoomSettings(config.defaultRoomSettings);
+
         this.defaultRoomColor = config.defaultRoomColor || "#3b5054";
         this.defaultLobbyColor = config.defaultLobbyColor || "#19b4b9";
         this.defaultLobbyColor2 = config.defaultLobbyColor2 || "#801014";
-        
+
         this.adminpass = config.adminpass || "Bop It";
     }
 
