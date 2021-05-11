@@ -44,7 +44,13 @@ module.exports = (cl) => {
         }
     })
     cl.on("m", (msg, admin) => {
-        if (!cl.quotas.cursor.attempt() && !admin) return;
+        try {
+            if (!cl.quotas.cursor.attempt() && !admin) return;
+        } catch (err) {
+            if (err) {
+                console.log(cl.quotas);
+            }
+        }
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
