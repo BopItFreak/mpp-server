@@ -1,1 +1,14 @@
-{}
+{
+  "c317d2ace1cd822b30c4c21b": {
+    "color": "#fa068b",
+    "name": "Anonymous",
+    "_id": "c317d2ace1cd822b30c4c21b",
+    "ip": "::1"
+  },
+  "a583a15a38f9f69cf73de1fe": {
+    "color": "#6b06ca",
+    "name": "Anonymous",
+    "_id": "a583a15a38f9f69cf73de1fe",
+    "ip": "127.0.0.1"
+  }
+}
